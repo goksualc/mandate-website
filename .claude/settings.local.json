@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /Users/goksualcinkaya/mandate)",
+      "Read(//Users/goksualcinkaya/mandate/**)"
+    ]
+  }
+}
