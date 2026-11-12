@@ -16,7 +16,7 @@ export function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & { side?: "left" | "right" }) {
   return (
     <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm data-[state=open]:animate-[fade-in_150ms_ease-out]" />
+      <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/30 data-[state=open]:animate-[fade-in_150ms_ease-out]" />
       <DialogPrimitive.Content
         className={cn(
           "fixed inset-y-0 z-50 flex w-[85vw] max-w-sm flex-col overflow-y-auto border-border bg-background-elevated p-5 shadow-2xl",

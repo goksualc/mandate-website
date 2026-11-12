@@ -59,7 +59,7 @@ export function DocsSearch() {
         </button>
       </DialogPrimitive.Trigger>
       <DialogPrimitive.Portal>
-        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
+        <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/30" />
         <DialogPrimitive.Content className="fixed left-1/2 top-24 z-50 w-[92vw] max-w-lg -translate-x-1/2 overflow-hidden rounded-xl border border-border-strong bg-background-elevated shadow-2xl">
           <DialogPrimitive.Title className="sr-only">Search documentation</DialogPrimitive.Title>
           <div className="flex items-center gap-2 border-b border-border px-4 py-3">

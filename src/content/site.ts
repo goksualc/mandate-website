@@ -1,11 +1,11 @@
 export const siteConfig = {
   name: "MANDATE",
-  titleShort: "MANDATE — Verifiable Policy Layer",
-  tagline: "Verifiable Policy Controls for Autonomous Financial Agents",
-  themeColor: "#a9142b",
+  titleShort: "MANDATE — Verifiable Authorization for Autonomous Agents",
+  tagline: "Verifiable Authorization for Autonomous Agents",
+  themeColor: "#fafaf8",
   description:
-    "MANDATE is a verifiable policy enforcement layer that enables autonomous financial agents to act only within cryptographically committed user-defined rules.",
-  url: "https://mandate-protocol.example",
+    "An independent research project on verifiable authorization for autonomous agents, using zero-knowledge proofs and cryptographic policy commitments. Experimental local prototype; not audited.",
+  url: "https://www.mandate.help",
   npmPackageMcp: "@0xgks/mandate-mcp",
   npmPackageSdk: "@0xgks/mandate-sdk",
   npmVersion: "0.1.0",
@@ -21,9 +21,14 @@ export const siteConfig = {
   status: "Local MVP · Experimental · Not Audited",
 } as const;
 
+export const author = {
+  name: "Göksu Alçınkaya",
+  role: "Independent Researcher",
+  areas: "Computer Science · Cryptography · Distributed Systems",
+} as const;
+
 export const mainNav = [
-  { title: "Product", href: "/#what-is-mandate" },
-  { title: "Architecture", href: "/#architecture" },
-  { title: "Developers", href: "/docs/sdk" },
-  { title: "Research", href: "/research" },
+  { title: "Research", href: "/#research-approach" },
+  { title: "Implementation", href: "/#implementation" },
+  { title: "Documentation", href: "/docs" },
 ] as const;
