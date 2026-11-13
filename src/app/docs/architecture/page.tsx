@@ -7,7 +7,7 @@ import { ComparisonTable } from "@/components/comparison-table";
 
 export const metadata: Metadata = {
   title: "Architecture",
-  description: "How the MoonPay Agent, MCP server, SDK, Noir circuit, contracts, sequencer, and local chain fit together in the MANDATE MVP.",
+  description: "How the MoonPay Agent, MCP server, SDK, Noir circuit, contracts, sequencer and local chain fit together in the MANDATE prototype.",
 };
 
 const toc = [
@@ -23,51 +23,52 @@ export default function ArchitectureDocsPage() {
   return (
     <DocsPageShell
       title="Architecture"
-      description="The agent interacts only with the MCP server. All proof generation and on-chain commitment happen inside the SDK and contract layer."
+      description="The agent talks only to the MCP server. Proof generation and on-chain commitment happen in the SDK and the contracts."
       toc={toc}
       pagerHref="/docs/architecture"
     >
       <Heading id="system-overview">System overview</Heading>
       <ArchitectureDiagram />
       <p className="mt-6">
-        Per epoch (default 10 seconds): the agent reads the anchored state, its strategy decides, it proves
-        compliance (Noir/UltraHonk, ~1s on a laptop), and the order <em>commitment</em> goes on-chain gated by
-        the proof — the plaintext order stays off-chain with the sequencer, simulating threshold encryption.
-        The sequencer then closes the epoch, reveals, and the auction contract computes the uniform clearing
-        price on-chain (maximum executed volume, midpoint of the tie interval); fills are emitted, reputation
-        counters accrue, and per-agent state roots advance.
+        In each epoch (10 seconds by default), the agent reads the anchored state and its strategy picks an order.
+        The agent then proves compliance (Noir/UltraHonk, about 1 second on a laptop). The order <em>commitment</em>{" "}
+        goes on-chain, gated by the proof. The plaintext order stays off-chain with the sequencer, which stands in
+        for threshold encryption. The sequencer then closes the epoch and reveals the orders. The auction contract
+        computes the uniform clearing price on-chain (maximum executed volume, midpoint of the tie interval). Fills
+        are emitted, reputation counters are updated and each agent&apos;s state root moves forward.
       </p>
-      <Callout type="note" title="Public inputs are assembled by the contract, not calldata">
-        The five public inputs of every proof — policy commitment (from the registry), state root (from the
-        contract), order commitment, current epoch, and the breaker bit — are assembled by the contract from
-        registry state. An agent cannot substitute different public inputs than what the contract itself holds.
+      <Callout type="note" title="The contract builds the public inputs, not the caller">
+        Every proof has five public inputs: the policy commitment (from the registry), the state root (from the
+        contract), the order commitment, the current epoch and the breaker bit. The contract builds them from its own
+        registry state. An agent cannot supply different public inputs from the ones the contract holds.
       </Callout>
 
       <Heading id="sdk">SDK</Heading>
       <p>
-        <code>@0xgks/mandate-sdk</code> coordinates portfolio reads, policy checks, proof generation, signing,
-        and order submission behind a single class, <code>MandateClient</code>. Full reference:{" "}
+        <code>@0xgks/mandate-sdk</code> does portfolio reads, policy checks, proof generation, signing and order
+        submission through one class, <code>MandateClient</code>. Full reference:{" "}
         <a href="/docs/sdk">/docs/sdk</a>.
       </p>
 
       <Heading id="noir-circuit">Noir circuit</Heading>
       <p>
-        <code>circuits/policy_check</code> is an UltraHonk compliance circuit (~277 ACIR opcodes, ~1s/proof, 13
-        Noir tests) that proves policy satisfaction without revealing the private strategy. It checks, in order:
+        <code>circuits/policy_check</code> is the UltraHonk compliance circuit (about 277 ACIR opcodes, about 1 second
+        per proof, 13 Noir tests). It proves that an order satisfies the policy without revealing the private
+        strategy. It checks, in order:
       </p>
       <ol>
-        <li>Correct opening of the policy commitment (the agent cannot substitute looser limits).</li>
-        <li>Order/epoch binding (replay-safe — a proof for epoch <em>e</em> cannot be reused in epoch <em>e&apos;</em>).</li>
-        <li>Whitelist Merkle membership (the market is on the approved list).</li>
-        <li>Portfolio-leaf membership in the on-chain state root (the agent cannot self-report a healthier portfolio).</li>
+        <li>The policy commitment opens correctly, so the agent cannot use looser limits.</li>
+        <li>The order is bound to the epoch, so a proof for epoch <em>e</em> cannot be reused in epoch <em>e&apos;</em>.</li>
+        <li>The market is on the whitelist (Merkle membership).</li>
+        <li>The portfolio leaf is part of the on-chain state root, so the agent cannot report a healthier portfolio.</li>
         <li>Notional cap: <code>size × limit_price ≤ max_order_notional</code>.</li>
         <li>Post-fill position cap.</li>
         <li>Daily loss cap.</li>
-        <li>Circuit breaker: when active, only strictly risk-reducing orders are provable.</li>
+        <li>Circuit breaker: when it is active, only orders that strictly reduce risk can be proved.</li>
       </ol>
 
       <Heading id="contracts">Contracts</Heading>
-      <p>Foundry-tested Solidity (24 tests, including on-chain verification of a real proof):</p>
+      <p>Solidity contracts tested with Foundry (24 tests, including on-chain verification of a real proof):</p>
       <ComparisonTable
         columns={["Contract", "Role"]}
         rows={[
@@ -81,17 +82,18 @@ export default function ArchitectureDocsPage() {
 
       <Heading id="sequencer">Sequencer</Heading>
       <p>
-        A minimal HTTP service running the commit–reveal epoch loop: envelope intake (verifies the Poseidon2
-        opening), reveal, clearing trigger, state-root settlement, and a mock price oracle. It is trusted for
-        liveness and privacy — not for mandate enforcement or replacing proofs. State-transition proofs are
-        deferred: the sequencer computes and posts post-fill Merkle roots off-chain, so the agent still cannot
-        lie, but the operator is trusted for state updates (see <a href="/docs/security#trust-assumptions">Security — trust assumptions</a>).
+        A small HTTP service that runs the commit–reveal epoch loop. It takes in order envelopes (checking the
+        Poseidon2 opening), reveals them, triggers clearing, settles state roots, and runs a mock price oracle. It is
+        trusted for liveness and privacy, but not for enforcing the mandate and it does not replace proofs. I have not
+        built state-transition proofs yet. The sequencer computes the post-fill Merkle roots and posts them, so the
+        agent still cannot lie about its portfolio, but the operator must be trusted for state updates (see{" "}
+        <a href="/docs/security#trust-assumptions">Security: trust assumptions</a>).
       </p>
 
       <Heading id="local-chain">Local chain</Heading>
       <p>
-        An Anvil-based local Ethereum environment running the MVP contracts. There is no public testnet or
-        mainnet deployment yet — see the roadmap on the <a href="/product-overview">Product Overview</a> page.
+        A local Ethereum environment based on Anvil, running the prototype contracts. There is no public testnet or
+        mainnet deployment yet. See the roadmap on the <a href="/product-overview">Product Overview</a> page.
       </p>
     </DocsPageShell>
   );

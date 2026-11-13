@@ -28,21 +28,21 @@ import { mcpTools } from "@/content/mcp";
 
 export const metadata: Metadata = {
   title: "Product Overview",
-  description: "A practical walkthrough of the working local MVP: the problem, architecture, MCP tools, demo policy, verified test results, security model, and limitations.",
+  description: "A walkthrough of the local prototype: the problem, architecture, MCP tools, demo policy, test results, security model and limitations.",
 };
 
 const toc = [
-  { id: "executive-summary", title: "Executive summary" },
+  { id: "executive-summary", title: "Summary" },
   { id: "the-problem", title: "The problem" },
   { id: "what-mandate-is", title: "What MANDATE is" },
   { id: "user-experience", title: "User experience" },
-  { id: "how-the-mvp-works", title: "How the MVP works" },
+  { id: "how-the-mvp-works", title: "How the prototype works" },
   { id: "agent-tools", title: "What the agent can do" },
   { id: "demo-policy", title: "The demo policy" },
-  { id: "verified-results", title: "Verified demo results" },
+  { id: "verified-results", title: "Demo results" },
   { id: "comparison", title: "Comparison with alternatives" },
   { id: "security-model", title: "Security model" },
-  { id: "mvp-vs-production", title: "MVP vs. production" },
+  { id: "mvp-vs-production", title: "Prototype and production" },
   { id: "use-cases", title: "Potential use cases" },
   { id: "roadmap", title: "Roadmap" },
   { id: "faq", title: "FAQ" },
@@ -59,44 +59,41 @@ export default function ProductOverviewPage() {
             MANDATE — Product Overview
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-muted-foreground">
-            A structured web adaptation of <code>mandate-product-overview.pdf</code> — the practical walkthrough
-            of the working local MVP. For developer reference (install commands, exact types, tool schemas), see{" "}
+            A web version of <code>mandate-product-overview.pdf</code>, which walks through the local prototype. For
+            install commands, exact types and tool schemas, see the{" "}
             <Link href="/docs">Documentation</Link>.
           </p>
           <div className="not-prose mt-6">
             <PdfViewer src="/mandate-product-overview.pdf" title="mandate-product-overview.pdf — Product Overview, July 2026" />
           </div>
 
-          <h2 id="executive-summary" className="scroll-mt-24">Executive summary</h2>
+          <h2 id="executive-summary" className="scroll-mt-24">Summary</h2>
           <p>
-            AI agents are increasingly capable of interacting directly with financial systems — placing orders,
-            initiating payments, managing portfolio positions, and executing across protocols and platforms.
-            MANDATE is a verifiable policy layer placed between an AI agent and a financial execution rail: the
-            agent does not simply assert that an action is allowed, it generates a zero-knowledge compliance
-            proof demonstrating that the action satisfies the registered policy. If the proof cannot be
-            produced, the order cannot be submitted.
+            AI agents can now work directly with financial systems. They can place orders, make payments and manage
+            positions. MANDATE is a policy layer between an AI agent and a financial execution rail. The agent does not
+            just claim that an action is allowed. It generates a zero-knowledge compliance proof that the action
+            satisfies the registered policy. If the proof cannot be produced, the order cannot be submitted.
           </p>
           <p>
-            The current working MVP integrates MANDATE with the MoonPay Agent through a published MCP server,{" "}
-            <code>@0xgks/mandate-mcp@0.1.0</code>. During testing, a valid order (buy 250 units at 3,500 —
-            notional 875,000) was successfully proven and submitted on-chain. An oversized order (10,000 units at
-            3,500 — notional 35,000,000) failed proof generation and was correctly rejected, with no transaction
-            accepted and the server remaining fully available.
+            The prototype connects to the MoonPay Agent through a published MCP server,{" "}
+            <code>@0xgks/mandate-mcp@0.1.0</code>. In testing, a valid order (buy 250 units at 3,500, notional 875,000)
+            was proved and submitted on-chain. An oversized order (10,000 units at 3,500, notional 35,000,000) failed
+            at proof generation and was rejected. No transaction was created and the server kept running.
           </p>
 
           <h2 id="the-problem" className="scroll-mt-24">The problem: agents need authority, but not unlimited authority</h2>
           <p>
-            Consider a practical scenario: a user wants an AI agent to trade ETH on their behalf, but only
-            within a specific market, within an order size of 1,000,000 notional, with a defined position limit,
-            and a daily loss ceiling — provided as instructions in the agent&apos;s prompt.
+            Suppose a user wants an AI agent to trade ETH for them, but only in one market, with orders of at most
+            1,000,000 notional, a position limit and a daily loss limit. Today the user would give these rules to the
+            agent as instructions in its prompt.
           </p>
           <ComparisonTable
             columns={["Risk", "Example", "Without MANDATE"]}
             rows={risks.map((r) => [r.risk, r.example, r.withoutMandate])}
           />
           <Callout type="tip" title="Key insight" className="mt-4">
-            There is a difference between asking an agent not to exceed a limit and making it mathematically
-            impossible for the agent to submit an action that does.
+            Asking an agent not to exceed a limit is different from making it impossible for the agent to submit an
+            action that exceeds it. The second needs a sound circuit.
           </Callout>
 
           <h2 id="what-mandate-is" className="scroll-mt-24">What MANDATE is</h2>
@@ -115,36 +112,35 @@ export default function ProductOverviewPage() {
             </div>
           </div>
           <p className="mt-4">
-            <strong>Core design principle:</strong> the circuit proves the ACTION, not the model. It does not
-            prove &ldquo;this is a trustworthy AI.&rdquo; It proves: &ldquo;this order satisfies policy
-            constraint set P against portfolio state S, where S is anchored on-chain.&rdquo; The agent&apos;s
-            strategy, reasoning, and confidence level are irrelevant to whether the proof succeeds.
+            <strong>Core design principle:</strong> the circuit proves the action, not the model. It does not prove that
+            the AI is trustworthy. It proves that this order satisfies policy constraints P against portfolio state S,
+            where S is anchored on-chain. The agent&apos;s strategy and reasoning do not affect whether the proof
+            succeeds.
           </p>
 
           <h2 id="user-experience" className="scroll-mt-24">User experience</h2>
           <p>
-            From the user&apos;s perspective, MANDATE operates as a silent enforcer running behind the agent: the
-            user defines the rules once, and the system enforces them automatically on every execution attempt —
-            (1) user defines the mandate, (2) MANDATE registers a policy commitment and issues a session key,
-            (3) the agent proposes an order, (4) MANDATE checks it and generates (or fails to generate) a proof,
-            (5) only a validly-proven order reaches the execution layer.
+            For the user, MANDATE runs quietly behind the agent. The user sets the rules once and they are checked on
+            every order: (1) the user defines the mandate, (2) MANDATE registers a policy commitment and issues a
+            session key, (3) the agent proposes an order, (4) MANDATE checks it and either generates a proof or fails
+            to, and (5) only an order with a valid proof reaches the execution layer.
           </p>
 
-          <h2 id="how-the-mvp-works" className="scroll-mt-24">How the MVP works</h2>
+          <h2 id="how-the-mvp-works" className="scroll-mt-24">How the prototype works</h2>
           <ArchitectureDiagram />
           <p className="mt-4">
-            Order plaintext (side, quantity, price) stays off-chain with the sequencer until the commit phase
-            closes — a commit-reveal design that simulates threshold encryption. Only the order commitment hash
-            goes on-chain with the proof. Full component breakdown: <Link href="/docs/architecture">Architecture</Link>.
+            The order plaintext (side, quantity, price) stays off-chain with the sequencer until the commit phase
+            closes. This commit–reveal design stands in for threshold encryption. Only the order commitment hash goes
+            on-chain, together with the proof. The full component breakdown is on the <Link href="/docs/architecture">Architecture</Link> page.
           </p>
 
           <h2 id="agent-tools" className="scroll-mt-24">What the agent can do</h2>
-          <p>The MCP server exposes exactly three tools — this is a deliberate security boundary, not an incomplete API.</p>
+          <p>The MCP server exposes exactly three tools. This is a deliberate security boundary, not an unfinished API.</p>
           <ComparisonTable
             columns={["Tool", "Type", "Purpose"]}
             rows={mcpTools.map((t) => [t.name, t.type, t.title])}
           />
-          <p>Full schemas and configuration: <Link href="/docs/mcp">MCP documentation</Link>.</p>
+          <p>Schemas and configuration are in the <Link href="/docs/mcp">MCP documentation</Link>.</p>
 
           <h2 id="demo-policy" className="scroll-mt-24">The demo policy</h2>
           <ComparisonTable
@@ -169,10 +165,10 @@ export default function ProductOverviewPage() {
             ]}
             highlightRow={1}
           />
-          <p>Interactive version with a full breakdown: <Link href="/docs/demo">Demo</Link>.</p>
+          <p>A fuller breakdown with an interactive view is on the <Link href="/docs/demo">Demo</Link> page.</p>
 
-          <h2 id="verified-results" className="scroll-mt-24">Verified demo results</h2>
-          <p>Produced during a live local test — not simulated outcomes.</p>
+          <h2 id="verified-results" className="scroll-mt-24">Demo results</h2>
+          <p>These come from one live local run, not from simulation.</p>
           <ComparisonTable
             columns={["Field", "Value"]}
             rows={[
@@ -191,7 +187,7 @@ export default function ProductOverviewPage() {
               </ul>
             </div>
             <div className="rounded-lg border border-border-strong bg-background-elevated p-4">
-              <p className="mb-2 text-sm font-semibold text-foreground">Not yet proven</p>
+              <p className="mb-2 text-sm font-semibold text-foreground">Not shown yet</p>
               <ul className="space-y-1.5 text-[13px] text-muted-foreground">
                 {provenNotYet.map((i) => (
                   <li key={i} className="flex gap-2"><X className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" aria-hidden />{i}</li>
@@ -209,16 +205,16 @@ export default function ProductOverviewPage() {
 
           <h2 id="security-model" className="scroll-mt-24">Security model</h2>
           <SecurityLayers />
-          <p className="mt-4">Full threat model and trust assumptions: <Link href="/docs/security">Security</Link>.</p>
+          <p className="mt-4">The threat model and trust assumptions are on the <Link href="/docs/security">Security</Link> page.</p>
 
-          <h2 id="mvp-vs-production" className="scroll-mt-24">Current MVP vs. future production system</h2>
+          <h2 id="mvp-vs-production" className="scroll-mt-24">Current prototype and a possible production system</h2>
           <ComparisonTable
             columns={["Area", "Current MVP", "Production direction"]}
             rows={mvpVsProduction.map((r) => [r.area, r.currentMvp, r.productionDirection])}
           />
 
           <h2 id="use-cases" className="scroll-mt-24">Potential use cases</h2>
-          <p>MANDATE&apos;s policy model is intentionally general — the same architecture applies across many autonomous financial applications:</p>
+          <p>The policy model is general, so the same design could apply to other autonomous financial uses. These are examples, and I have only built the trading case:</p>
           <ComparisonTable
             columns={["Use case", "Example mandate"]}
             rows={useCases.map((u) => [u.useCase, u.example])}

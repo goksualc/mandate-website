@@ -10,7 +10,7 @@ import { mcpTools, mcpEnvVars } from "@/content/mcp";
 
 export const metadata: Metadata = {
   title: "MCP",
-  description: "How to install, configure, and use the MANDATE MCP server — its three tools, environment variables, and security rationale.",
+  description: "How to install, configure and use the MANDATE MCP server: its three tools, its environment variables and why the tool list is small.",
 };
 
 const toc = [
@@ -50,21 +50,19 @@ export default function McpDocsPage() {
   return (
     <DocsPageShell
       title="MCP"
-      description="@0xgks/mandate-mcp is a thin stdio wrapper around @0xgks/mandate-sdk, published for MoonPay Agent, Claude Desktop, Codex, and other MCP-compatible clients."
+      description="@0xgks/mandate-mcp is a thin stdio wrapper around @0xgks/mandate-sdk. It works with MoonPay Agent, Claude Desktop, Codex and other MCP clients."
       toc={toc}
       pagerHref="/docs/mcp"
     >
       <Heading id="overview">Overview</Heading>
       <p>
-        MCP (Model Context Protocol) is an open standard that lets AI agents discover and call external tools in
-        a structured, interoperable way. By publishing a dedicated MCP server, MANDATE ensures that any
-        MCP-compatible agent can connect to the policy enforcement layer without modification to the agent
-        itself.
+        MCP (Model Context Protocol) is an open standard that lets AI agents find and call external tools. Because
+        MANDATE has its own MCP server, any MCP-compatible agent can connect to it without changes to the agent.
       </p>
       <p>
-        The server reimplements no proving, commitment, Merkle, or submission logic of its own — every tool is a
-        thin wrapper around the same <code>MandateClient</code> from <code>@0xgks/mandate-sdk</code> documented
-        on the <a href="/docs/sdk">SDK page</a>.
+        The server has no proving, commitment, Merkle or submission logic of its own. Every tool is a thin wrapper
+        around the same <code>MandateClient</code> from <code>@0xgks/mandate-sdk</code> that the{" "}
+        <a href="/docs/sdk">SDK page</a> describes.
       </p>
 
       <Heading id="installation">Installation</Heading>
@@ -75,28 +73,27 @@ export default function McpDocsPage() {
           { label: "yarn", code: "yarn add @0xgks/mandate-mcp" },
         ]}
       />
-      <p>Or run the published binary directly, without installing:</p>
+      <p>Or run the published binary without installing it:</p>
       <CodeBlock code="npx -y @0xgks/mandate-mcp@0.1.0" lang="bash" />
       <p>
-        The repository&apos;s <code>npm run local:start</code> writes a complete, ready-to-paste config to{" "}
-        <code>.local/moonpay-agent-mandate.json</code> automatically — see{" "}
+        In the repository, <code>npm run local:start</code> writes a complete config to{" "}
+        <code>.local/moonpay-agent-mandate.json</code> for you. See{" "}
         <a href="/docs/quickstart#mcp-local-setup">Quickstart — MCP local setup</a>.
       </p>
 
       <Heading id="client-configuration">Client configuration</Heading>
       <p>
-        A redacted configuration example, adaptable to any MCP client that reads an <code>mcpServers</code>{" "}
-        map (this shape matches MoonPay Agent, Claude Desktop, and Codex):
+        Here is an example configuration with secrets removed. It works with any MCP client that reads an{" "}
+        <code>mcpServers</code> map, including MoonPay Agent, Claude Desktop and Codex:
       </p>
       <CodeBlock code={configExample} lang="json" filename="mcp config (redacted)" />
-      <Callout type="note" title="This is more environment variables than the product overview shows">
-        The product-overview PDF&apos;s redacted example lists seven <code>MANDATE_*</code> variables. The
-        actual server (<code>packages/mandate-mcp/src/config.ts</code>) requires five more —{" "}
-        <code>MANDATE_CIRCUIT_PATH</code>, <code>MANDATE_WHITELIST_ROOT</code>,{" "}
-        <code>MANDATE_MAX_ORDER_NOTIONAL</code>, <code>MANDATE_MAX_POSITION</code>, and{" "}
-        <code>MANDATE_MAX_DAILY_LOSS</code> — because <code>PolicyParams</code> is a required field of the
-        SDK&apos;s config and the server has no way to recover that plaintext from the chain (only its
-        commitment is on-chain). This page follows the repository implementation.
+      <Callout type="note" title="This lists more environment variables than the product overview">
+        The product overview PDF lists seven <code>MANDATE_*</code> variables in its example. The server itself (
+        <code>packages/mandate-mcp/src/config.ts</code>) needs five more: <code>MANDATE_CIRCUIT_PATH</code>,{" "}
+        <code>MANDATE_WHITELIST_ROOT</code>, <code>MANDATE_MAX_ORDER_NOTIONAL</code>,{" "}
+        <code>MANDATE_MAX_POSITION</code> and <code>MANDATE_MAX_DAILY_LOSS</code>. The SDK config requires{" "}
+        <code>PolicyParams</code>, and the server cannot read that plaintext from the chain, which stores only the
+        commitment. This page follows the repository code.
       </Callout>
       <p className="mt-6 text-sm font-medium text-foreground">Environment variables</p>
       <ComparisonTable
@@ -106,9 +103,8 @@ export default function McpDocsPage() {
 
       <Heading id="available-tools">Available tools</Heading>
       <p>
-        The server exposes <strong>exactly three tools</strong> — this is a deliberate design decision, not an
-        incomplete API. There is no <code>mandate_preview_order</code> or dry-run tool: the SDK exposes no such
-        method, so none was invented for the server either.
+        The server exposes <strong>exactly three tools</strong>. This is deliberate, not an unfinished API. There is
+        no <code>mandate_preview_order</code> or dry-run tool, because the SDK has no such method.
       </p>
       <div className="grid gap-4 not-prose sm:grid-cols-3">
         {mcpTools.map((tool) => (
@@ -133,7 +129,7 @@ export default function McpDocsPage() {
       ))}
 
       <Heading id="example-interaction">Example interaction</Heading>
-      <p>An end-to-end walkthrough, exactly as documented in the repository README:</p>
+      <p>An end-to-end example, as described in the repository README:</p>
       <ComparisonTable
         columns={["Step", "Prompt / action", "Expected result"]}
         rows={[
@@ -146,17 +142,15 @@ export default function McpDocsPage() {
 
       <Heading id="security-considerations">Security considerations</Heading>
       <p>
-        Limiting the tool surface area is itself a security property: an agent cannot do something the MCP
-        server does not expose, regardless of what it is instructed to attempt. All chain/sequencer/circuit/key
-        material is sourced only from server-side environment variables — never from MCP tool arguments — so a
-        client can request an order but can never redirect the server at a different RPC endpoint, sequencer,
-        signer, or circuit.
+        A small tool list limits what an agent can do. The agent cannot do anything the server does not expose, no
+        matter what it is told to try. The server reads the chain, sequencer, circuit and key settings only from its
+        own environment variables, never from tool arguments. A client can ask for an order, but it cannot point the
+        server at a different RPC endpoint, sequencer, signer or circuit.
       </p>
       <Callout type="danger" title="Never combine mandate_submit_order with unrestricted execution tools">
-        Do not give the same agent unrestricted wallet, swap, transfer, or trading tools alongside{" "}
-        <code>mandate_submit_order</code>. Proof-gating only works if it is the only execution path available
-        to the agent. Session keys and policy salts are secrets — never commit them to version control, chat
-        logs, or shared documents.
+        Do not give the same agent unrestricted wallet, swap, transfer or trading tools next to{" "}
+        <code>mandate_submit_order</code>. Proof-gating only works if it is the agent&apos;s only way to act. Session
+        keys and policy salts are secrets. Do not put them in version control, chat logs or shared documents.
       </Callout>
     </DocsPageShell>
   );

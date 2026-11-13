@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArchitectureDiagram } from "@/components/architecture-diagram";
+import { VideoPlayer } from "@/components/video-player";
 import { author, siteConfig } from "@/content/site";
 import { mcpTools } from "@/content/mcp";
 
@@ -25,16 +26,15 @@ export default function HomePage() {
     <div className="paper">
       {/* Introduction */}
       <section aria-labelledby="title" className="py-14 sm:py-20">
-        <p className="label">Independent Research Project · 2026</p>
-        <h1 id="title" className="mt-4 text-5xl font-semibold tracking-wide sm:text-6xl">
+        <h1 id="title" className="text-5xl font-semibold tracking-wide sm:text-6xl">
           MANDATE
         </h1>
         <p className="mt-3 font-serif text-2xl text-foreground sm:text-3xl">
           Verifiable Authorization for Autonomous Agents
         </p>
         <p className="mt-6 max-w-[62ch] text-lg leading-relaxed text-muted-foreground">
-          An experimental framework investigating how autonomous agents can execute delegated actions while remaining
-          subject to cryptographically verifiable, user-defined constraints.
+          An experimental framework for letting autonomous agents act on a user&apos;s behalf while staying inside limits the
+          user sets, and where those limits can be checked cryptographically.
         </p>
         <ul className="mt-6 flex flex-wrap gap-x-7 gap-y-2 text-[15px]">
           <li><a className="textlink" href="/MANDATE.pdf" target="_blank" rel="noopener noreferrer">Design document (PDF) ↗</a></li>
@@ -43,32 +43,37 @@ export default function HomePage() {
           <li><Link className="textlink" href="/docs">Documentation ↗</Link></li>
         </ul>
         <p className="mt-4 font-mono text-xs text-muted-foreground">
-          Status: local prototype · experimental · not externally audited · no public source repository yet
+          Status: local prototype · experimental · not audited
         </p>
+      </section>
+
+      {/* Project overview video */}
+      <section id="overview" className="paper-section" aria-labelledby="video-h">
+        <h2 id="video-h">Project Overview</h2>
+        <VideoPlayer videoId="Md1v-K03hV0" title="Mandate Project Introduction" />
       </section>
 
       {/* Abstract */}
       <section id="abstract" className="paper-section" aria-labelledby="abstract-h">
         <h2 id="abstract-h">Abstract</h2>
         <p>
-          Autonomous software agents increasingly act on behalf of users, for example by placing orders or initiating
-          payments. Delegating this authority raises an authorization problem. The constraints a user intends to impose
-          are usually enforced through prompt instructions, operator-side rules, or wallet-level limits. These
-          mechanisms operate at a layer the agent may influence, or they cannot be independently verified by a third
-          party, or they require trusting the operator that runs them.
+          Software agents now place orders and make payments for users. This raises an authorization problem. A user
+          wants to set limits on what the agent can do, but today those limits are usually enforced by prompt
+          instructions, rules on the operator&apos;s server, or wallet limits. The agent may be able to influence
+          these, an outside party cannot check them, or both.
         </p>
         <p>
-          MANDATE investigates an alternative. The user&apos;s policy is bound to a cryptographic commitment
-          registered on-chain, and each proposed action must be accompanied by a zero-knowledge proof that it satisfies
-          the committed policy with respect to an anchored portfolio state. The intended properties are that an agent
-          cannot produce an acceptable action outside its policy, that a proof is bound to a particular policy, state,
-          epoch and order and so cannot be replayed, and that the policy parameters need not be disclosed in full.
+          MANDATE explores another approach. The user&apos;s policy is committed to with a hash that is registered
+          on-chain. Every action the agent proposes must come with a zero-knowledge proof that it satisfies the
+          committed policy, given a committed portfolio state. The properties I am aiming for are: the agent cannot
+          produce an acceptable action outside its policy; a proof is tied to one policy, state, epoch and order, so it
+          cannot be replayed; and the policy values do not have to be made public.
         </p>
         <p>
-          The current implementation is a local proof-of-concept: a Noir circuit proved with UltraHonk, Solidity
-          verification contracts, a TypeScript SDK, and an MCP server, running on a local development chain with a
-          single trusted sequencer. These properties are exercised by the prototype&apos;s test suites and a
-          documented demonstration. They are not externally audited, and they are not established for production use.
+          The current implementation is a local prototype. It has a Noir circuit proved with UltraHonk, Solidity
+          verification contracts, a TypeScript SDK and an MCP server. It runs on a local development chain with one
+          trusted sequencer. The test suites and a documented demo exercise these properties. The system has not been
+          audited and should not be used in production.
         </p>
       </section>
 
@@ -77,16 +82,17 @@ export default function HomePage() {
         <h2 id="arch-h">System Architecture</h2>
         <ArchitectureDiagram />
         <p>
-          The agent interacts only with the MCP server, which exposes three tools and delegates to the SDK. For each
-          order the SDK reads the current epoch and on-chain state root, checks that the local policy opens the
-          registered commitment, obtains the portfolio witness from the sequencer and verifies it against the on-chain
-          root, and then invokes the Noir circuit. If a proof is produced, the SDK submits the order commitment with
-          the proof to the auction contract. The five public inputs (policy commitment, state root, order commitment,
-          epoch, circuit-breaker bit) are assembled by the contract from its own state rather than taken from calldata.
+          The agent talks only to the MCP server. The server exposes three tools and passes calls to the SDK. For each
+          order, the SDK reads the current epoch and the on-chain state root, and checks that the local policy opens the
+          registered commitment. It then gets the portfolio witness from the sequencer and checks it against the
+          on-chain root. After that it runs the Noir circuit. If the circuit produces a proof, the SDK sends the order
+          commitment and the proof to the auction contract. The contract builds the five public inputs itself (policy
+          commitment, state root, order commitment, epoch and circuit-breaker bit) instead of reading them from
+          calldata.
         </p>
         <p>
-          Funds are held in a separate account contract whose owner-only withdrawal path does not depend on the agent,
-          sequencer, proof system, or auction. Component-level detail is in the{" "}
+          Funds sit in a separate account contract. Its owner-only withdrawal does not depend on the agent, the
+          sequencer, the proof system or the auction. More detail is in the{" "}
           <Link href="/docs/architecture">architecture documentation</Link>.
         </p>
       </section>
@@ -97,39 +103,38 @@ export default function HomePage() {
 
         <h3>Delegated Authorization</h3>
         <p>
-          A user grants an agent a bounded capability: a set of permitted markets, a per-order notional limit, a
-          position limit, a daily loss limit, and an emergency mode that permits only risk-reducing orders. Prompt
-          instructions, human approval, backend rules, wallet spending limits and multisignature schemes each address
-          part of this problem. The question studied here is whether the bound itself can be made checkable by a party
-          other than the operator, without requiring a human to approve every action. A comparison of these approaches
-          is given in the <Link href="/research#competitive-landscape">protocol design notes</Link>.
+          A user gives an agent limited authority: a list of allowed markets, a maximum order size, a position limit, a
+          daily loss limit, and an emergency mode that only allows orders that reduce risk. Prompt instructions, human
+          approval, backend rules, wallet limits and multisig each cover part of this. My question is whether the
+          limits themselves can be checked by someone other than the operator, without a human approving every action.
+          I compare these approaches in the <Link href="/research#competitive-landscape">protocol design notes</Link>.
         </p>
 
         <h3>Cryptographic Policy Commitments</h3>
         <p>
-          The policy is hashed (Poseidon2) together with a secret salt, and only the resulting commitment is stored
-          on-chain at registration. Proof generation must open this commitment, so the agent cannot substitute looser
-          limits than the ones the user registered. The policy values themselves are not published.
+          The policy is hashed with a secret salt (Poseidon2), and only the hash is stored on-chain when the agent is
+          registered. To prove anything, the agent must open this commitment. It therefore cannot swap in looser limits
+          than the ones the user registered. The policy values themselves are not published.
         </p>
 
         <h3>Zero-Knowledge Verification</h3>
         <p>
-          A circuit encodes the constraints an order must satisfy: commitment opening, order and epoch binding,
-          whitelist membership, portfolio membership in the committed state root, notional, post-fill position and
-          daily-loss caps, and circuit-breaker behaviour. A violating order makes proof generation fail, so the
-          rejection is a property of the circuit rather than of a policy check that could be skipped. The on-chain
-          verifier accepts only proofs for the current epoch and state.
+          The circuit encodes what an order must satisfy: the commitment opens correctly, the order is bound to the
+          epoch, the market is on the whitelist, the portfolio is part of the committed state root, and the order stays
+          within the notional, position and daily-loss limits and the circuit-breaker rule. If an order breaks a rule,
+          proof generation fails. The rejection comes from the circuit, not from a separate check that could be skipped.
+          The on-chain verifier only accepts proofs for the current epoch and state.
         </p>
 
         <h3>Enforcement and Trust Assumptions</h3>
         <p>
-          Enforcement holds only if proof-gated submission is the agent&apos;s sole execution path; an agent that is
-          also given unrestricted transfer or trading tools bypasses it. The sequencer is trusted for liveness, for
-          post-clearing state updates, and for order-flow privacy. State-transition proofs are not implemented, so the
-          claim is limited: a faulty sequencer can stall the system or post an incorrect state root, but it does not
-          let an agent prove a violating order against the root the contract holds. The UltraHonk setup is reused
-          rather than re-audited. These are design intentions evaluated on a local prototype, not demonstrated
-          guarantees. See <Link href="/docs/security">Security</Link> for the threat model.
+          This only works if proof-gated submission is the agent&apos;s only way to act. If the agent also has
+          unrestricted transfer or trading tools, it can go around the system. The sequencer is trusted for liveness,
+          for state updates after clearing, and for order privacy. I have not implemented state-transition proofs, so
+          the guarantee is limited. A faulty sequencer can stall the system or post a wrong state root, but it should not
+          let an agent prove a violating order against the root the contract holds. The UltraHonk setup is reused from
+          elsewhere and I did not re-audit it. These are design goals tested on a local prototype. I have not shown
+          them to hold in general. The <Link href="/docs/security">Security</Link> page has the threat model.
         </p>
       </section>
 
@@ -137,10 +142,9 @@ export default function HomePage() {
       <section id="implementation" className="paper-section" aria-labelledby="impl-h">
         <h2 id="impl-h">Implementation</h2>
         <p>
-          The proof-of-concept comprises the components below. The circuit is written in Noir and proved with
-          UltraHonk; the project documentation reports about 277 ACIR opcodes and roughly one second per proof on a
-          laptop. These are informal measurements from a single local environment and are not benchmarks. The
-          verifier contract is generated by the Barretenberg tooling and re-verifies proofs on-chain.
+          The prototype has the components listed below. The circuit is written in Noir and proved with UltraHonk. It has
+          about 277 ACIR opcodes, and a proof takes roughly one second on a laptop. These are informal numbers from one
+          local setup, not benchmarks. The verifier contract is generated with Barretenberg and checks proofs on-chain.
         </p>
         <div className="mt-5 overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-left text-[14px]">
@@ -166,35 +170,31 @@ export default function HomePage() {
 
         <h3>SDK and MCP integration</h3>
         <p>
-          <code>MandateClient</code> in the SDK implements the sequence described above. The MCP server is a thin
-          wrapper that exposes only{" "}
+          <code>MandateClient</code> in the SDK runs the sequence described above. The MCP server is a thin wrapper that
+          exposes only{" "}
           {mcpTools.map((t, i) => (
             <span key={t.name}>
               <code>{t.name}</code>
               {i < mcpTools.length - 2 ? ", " : i === mcpTools.length - 2 ? ", and " : ""}
             </span>
           ))}
-          . Limiting the tool surface is intended to limit what a prompted or compromised agent can attempt. A MoonPay
-          agent was used as the integration test; the server is not specific to it.
+          . Keeping the tool list this small limits what a manipulated or compromised agent can try. I tested the
+          integration with a MoonPay agent, but the server does not depend on it.
         </p>
 
         <h3>Demonstration</h3>
         <p>
-          In the documented local demonstration, a compliant order produces a proof and an on-chain commitment, while an
-          order exceeding the notional limit fails proof generation and creates no transaction. The MCP server remains
-          available afterwards. See the <Link href="/docs/demo">demo walkthrough</Link>.
+          In the local demo, a compliant order gets a proof and an on-chain commitment. An order over the notional limit
+          fails at proof generation and creates no transaction. The MCP server keeps working afterwards. See the <Link href="/docs/demo">demo walkthrough</Link>.
         </p>
 
         <h3>Resources</h3>
         <ul>
           <li><Link href="/docs">Documentation</Link>: quickstart, SDK, MCP, architecture, security, demo</li>
           <li><Link href="/product-overview">Prototype overview</Link> (<a href="/mandate-product-overview.pdf">PDF</a>)</li>
-          <li><Link href="/research">Protocol design</Link> (<a href="/MANDATE.pdf">PDF</a>), a longer-term design that is largely unimplemented</li>
+          <li><Link href="/research">Protocol design</Link> (<a href="/MANDATE.pdf">PDF</a>), a longer-term design, mostly not implemented</li>
           <li><a href={siteConfig.npmUrlSdk}>{siteConfig.npmPackageSdk}</a> and <a href={siteConfig.npmUrlMcp}>{siteConfig.npmPackageMcp}</a> (v{siteConfig.npmVersion})</li>
         </ul>
-        <p className="mt-3 text-[14px] text-muted-foreground">
-          The source repository is not yet public, so no repository link is provided.
-        </p>
       </section>
 
       {/* Limitations and future work */}
@@ -202,23 +202,23 @@ export default function HomePage() {
         <h2 id="lim-h">Limitations and Future Work</h2>
         <h3>Limitations of the current prototype</h3>
         <ul>
-          <li>It runs only on a local development chain; there is no testnet or mainnet deployment.</li>
-          <li>Neither the circuit, contracts, nor SDK has been externally audited.</li>
-          <li>The sequencer is a single trusted service, and post-clearing state roots are not accompanied by validity proofs.</li>
-          <li>Only one demonstration market and policy shape is exercised. Proving cost has not been measured at scale.</li>
-          <li>Order privacy is commit–reveal through one party, so it holds against everyone except the sequencer.</li>
+          <li>It runs only on a local development chain. There is no testnet or mainnet deployment.</li>
+          <li>The circuit, contracts and SDK have not been audited.</li>
+          <li>The sequencer is a single trusted service, and the state roots it posts after clearing have no validity proofs.</li>
+          <li>Only one demo market and one policy shape are tested. I have not measured proving cost at larger scale.</li>
+          <li>Order privacy comes from commit–reveal through a single party, so it holds against everyone except the sequencer.</li>
         </ul>
         <h3>Directions for future work</h3>
         <ul>
-          <li>Proving state transitions so that sequencer updates need not be trusted.</li>
-          <li>Replacing the single sequencer with threshold-encrypted order flow and a decentralized operator set.</li>
-          <li>Independent review of the circuit and contracts, and evaluation on a public test network.</li>
-          <li>Policy models beyond trading, such as payments with recipient allowlists and cumulative limits.</li>
-          <li>Privacy-preserving, portable records of an agent&apos;s compliance history.</li>
+          <li>Prove state transitions, so the sequencer&apos;s updates do not have to be trusted.</li>
+          <li>Replace the single sequencer with threshold-encrypted order flow and a decentralized set of operators.</li>
+          <li>Get an independent review of the circuit and contracts, and test on a public test network.</li>
+          <li>Support policies beyond trading, such as payments with recipient allowlists and cumulative limits.</li>
+          <li>Keep a private, portable record of an agent&apos;s compliance history.</li>
         </ul>
         <p className="mt-3">
-          The last three items are described in the <Link href="/research">protocol design document</Link> and are not
-          implemented.
+          The first two items and the last one are described in the <Link href="/research">protocol design document</Link>.
+          None of them is implemented.
         </p>
       </section>
 

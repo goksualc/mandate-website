@@ -38,7 +38,7 @@ export default function SdkDocsPage() {
   return (
     <DocsPageShell
       title="SDK"
-      description="@0xgks/mandate-sdk is a TypeScript library for generating and submitting MANDATE-compliant agent orders: Poseidon2 commitments, sparse-Merkle portfolio membership, Noir/Barretenberg proving, and sequencer/contract submission. Every snippet on this page is written directly against the package's real source."
+      description="@0xgks/mandate-sdk is a TypeScript library for building and submitting orders that follow a MANDATE policy. It handles Poseidon2 commitments, sparse Merkle portfolio membership, Noir/Barretenberg proving, and submission to the sequencer and contracts. The snippets on this page are written against the package source."
       toc={toc}
       pagerHref="/docs/sdk"
     >
@@ -54,31 +54,31 @@ export default function SdkDocsPage() {
 
       <Heading id="configuration">Configuration</Heading>
       <p>
-        <code>MandateClient</code> is constructed with a single <code>MandateClientConfig</code> object. Every
-        field below comes directly from <code>packages/mandate-sdk/src/types.ts</code>.
+        You create a <code>MandateClient</code> with one <code>MandateClientConfig</code> object. The fields below come
+        from <code>packages/mandate-sdk/src/types.ts</code>.
       </p>
       <CodeBlock code={sdkEnvExample} lang="bash" filename=".env.example" />
       <CodeBlock code={sdkConfig} lang="typescript" filename="mandate-client.ts" className="mt-4" />
       <p className="text-xs">
-        Optional config overrides not shown above: <code>chain</code> (defaults to the local Anvil/foundry
-        chain), <code>nargoBin</code> / <code>bbBin</code> (default to <code>$NARGO_BIN</code>/<code>$BB_BIN</code>{" "}
-        or the binaries on <code>PATH</code>), <code>orderSaltBase</code>, and test-only injection points
-        (<code>publicClient</code>, <code>walletClient</code>, <code>fetch</code>).
+        Optional settings not shown above: <code>chain</code> (defaults to the local Anvil/foundry chain),{" "}
+        <code>nargoBin</code> and <code>bbBin</code> (default to <code>$NARGO_BIN</code> and <code>$BB_BIN</code>, or
+        to the binaries on <code>PATH</code>), <code>orderSaltBase</code>, and three hooks meant for tests:{" "}
+        <code>publicClient</code>, <code>walletClient</code> and <code>fetch</code>.
       </p>
 
       <Heading id="agent-registration">Agent registration</Heading>
       <p>
-        <code>MandateClient</code> does not register agents itself — registration is an on-chain, one-time setup
-        step (see <code>demo/register.ts</code> and <code>scripts/setup-local-mandate.ts</code> in the
-        repository), independent of the SDK&apos;s per-order proving path. What the SDK <em>does</em> check, on
-        every call, is that your local plaintext policy still opens the on-chain registered commitment:
+        <code>MandateClient</code> does not register agents. Registration is a one-time on-chain setup step (see{" "}
+        <code>demo/register.ts</code> and <code>scripts/setup-local-mandate.ts</code> in the repository) and is
+        separate from the per-order proving path. What the SDK does check on every call is that your local plaintext
+        policy still opens the commitment registered on-chain:
       </p>
       <CodeBlock code={sdkRegistration} lang="typescript" />
 
       <Heading id="policy-setup">Policy setup</Heading>
       <p>
-        A <code>PolicyParams</code> object is the plaintext opening of the on-chain policy commitment. All
-        fields are <code>bigint</code> and must mirror <code>circuits/policy_check/src/main.nr</code> exactly:
+        A <code>PolicyParams</code> object is the plaintext that opens the on-chain policy commitment. All fields are{" "}
+        <code>bigint</code> and must match <code>circuits/policy_check/src/main.nr</code> exactly:
       </p>
       <ComparisonTable
         columns={["Field", "Meaning"]}
@@ -96,19 +96,19 @@ export default function SdkDocsPage() {
 
       <Heading id="submitting-an-order">Submitting an order</Heading>
       <p>
-        The one method on <code>MandateClient</code>: <code>proveAndSubmit(order: MandateOrder)</code>. It reads
-        the current epoch and on-chain state root, verifies the local policy against the registered commitment,
-        fetches and verifies the sequencer&apos;s portfolio witness, generates the Noir proof, and — only if
-        every step succeeds — submits the proof-gated commitment on-chain.
+        <code>MandateClient</code> has one method for this: <code>proveAndSubmit(order: MandateOrder)</code>. It reads
+        the current epoch and the on-chain state root, and checks the local policy against the registered commitment.
+        It then fetches the sequencer&apos;s portfolio witness and verifies it, and generates the Noir proof. Only if
+        every step succeeds does it submit the proof-gated commitment on-chain.
       </p>
       <CodeBlock code={sdkSubmit} lang="typescript" />
-      <p>On success, it resolves to a <code>ProveAndSubmitResult</code>:</p>
+      <p>On success it returns a <code>ProveAndSubmitResult</code>:</p>
       <CodeBlock code={sdkSuccessResult} lang="typescript" hideCopy />
 
       <Heading id="handling-proof-failures">Handling proof failures</Heading>
       <p>
-        A mandate-violating order throws before anything touches the chain — <code>nargo execute</code> fails on
-        the violated circuit assertion, and <code>proveAndSubmit</code> surfaces it as a typed error:
+        An order that breaks the mandate throws an error before anything reaches the chain. <code>nargo execute</code>{" "}
+        fails on the violated circuit assertion, and <code>proveAndSubmit</code> reports it as a typed error:
       </p>
       <CodeBlock code={sdkRejection} lang="typescript" />
 
@@ -123,9 +123,9 @@ export default function SdkDocsPage() {
         rows={sdkErrors.map((e) => [e.name, e.thrownWhen])}
       />
       <Callout type="note" title="No preview or dry-run method" className="mt-6">
-        The SDK exposes no <code>previewOrder()</code> or simulation method — the only way to check compliance
-        is to actually attempt <code>proveAndSubmit()</code>. A rejection is free of on-chain side effects (no
-        transaction is ever sent for a non-compliant order), but proving itself still runs locally.
+        The SDK has no <code>previewOrder()</code> or simulation method. The only way to check compliance is to call{" "}
+        <code>proveAndSubmit()</code>. A rejection has no on-chain side effects, because no transaction is sent for a
+        non-compliant order. The proving attempt still runs locally.
       </Callout>
     </DocsPageShell>
   );

@@ -24,7 +24,7 @@ export default function DemoDocsPage() {
   return (
     <DocsPageShell
       title="Demo"
-      description="A visualization and record of the documented local MVP demo — a real compliance proof, a real on-chain commitment, a valid order accepted, and an invalid order rejected."
+      description="A record of the local demo: a compliance proof, an on-chain commitment, a valid order that is accepted and an invalid order that is rejected."
       toc={toc}
       pagerHref="/docs/demo"
     >
@@ -43,8 +43,8 @@ export default function DemoDocsPage() {
         ]}
       />
       <p className="mt-4">
-        <strong>Order notional = quantity × limit price</strong> — the key metric the policy enforces. It
-        measures the total value of an order, not just its quantity or price in isolation.
+        <strong>Order notional = quantity × limit price.</strong> This is the value the policy limits. It measures the
+        total value of an order, not only its quantity or its price.
       </p>
 
       <Heading id="valid-order">Valid order</Heading>
@@ -72,8 +72,8 @@ export default function DemoDocsPage() {
 
       <Heading id="verified-results" className="mt-10">Verified results</Heading>
       <p>
-        These results were produced during a live local test of the MVP — real MCP tool calls, a real on-chain
-        transaction, and a real proof-generation failure (not simulated outcomes).
+        These results come from one live local run of the prototype. The MCP tool calls, the on-chain transaction and
+        the proof-generation failure were real, not simulated.
       </p>
       <ComparisonTable
         columns={["Field", "Value"]}
@@ -86,7 +86,7 @@ export default function DemoDocsPage() {
       />
       <div className="mt-6 grid gap-4 not-prose sm:grid-cols-2">
         <div className="rounded-lg border border-border-strong bg-background-elevated p-4">
-          <p className="mb-2 text-sm font-semibold text-foreground">Confirmed in the MVP</p>
+          <p className="mb-2 text-sm font-semibold text-foreground">Confirmed in the prototype</p>
           <ul className="space-y-1.5 text-[13px] text-muted-foreground">
             {provenConfirmed.map((item) => (
               <li key={item} className="flex gap-2">
@@ -97,7 +97,7 @@ export default function DemoDocsPage() {
           </ul>
         </div>
         <div className="rounded-lg border border-border-strong bg-background-elevated p-4">
-          <p className="mb-2 text-sm font-semibold text-foreground">Not yet proven</p>
+          <p className="mb-2 text-sm font-semibold text-foreground">Not shown yet</p>
           <ul className="space-y-1.5 text-[13px] text-muted-foreground">
             {provenNotYet.map((item) => (
               <li key={item} className="flex gap-2">
@@ -110,11 +110,11 @@ export default function DemoDocsPage() {
       </div>
 
       <Heading id="running-locally" className="mt-10">Running locally</Heading>
-      <p>The one-command demo (from a clone of the repository):</p>
+      <p>The one-command demo, from a clone of the repository:</p>
       <CodeBlock code="./demo/run.sh" lang="bash" />
-      <p>Or, for the persistent MCP-agent setup:</p>
+      <p>Or the persistent setup for an MCP agent:</p>
       <CodeBlock code={`${localCommands.start}\n${localCommands.status}\n${localCommands.stop}`} lang="bash" />
-      <p>See <a href="/docs/quickstart">Quickstart</a> for the full walkthrough and prerequisites.</p>
+      <p>The <a href="/docs/quickstart">Quickstart</a> has the full walkthrough and the prerequisites.</p>
     </DocsPageShell>
   );
 }
